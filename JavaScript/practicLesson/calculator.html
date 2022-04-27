@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+    />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <title>Document</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        font-family: Gotham Rounded, sans-serif;
+        font-weight: normal;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(to right, slategray, lightgray);
+      }
+
+      .calculator-grid {
+        display: grid;
+        justify-content: center;
+        align-content: center;
+        min-height: 100vh;
+        grid-template-columns: repeat(4, 100px);
+        grid-template-rows: minmax(120px, auto) repeat(5, 100px);
+      }
+
+      .calculator-grid > button {
+        cursor: pointer;
+        font-size: 2rem;
+        border: 1px solid #ffffff;
+        outline: none;
+        background-color: rgba(255, 255, 255, 0.75);
+      }
+      .calculator-grid > button:hover {
+        background-color: #a9a9a9;
+      }
+      .span-two {
+        grid-column: span 2;
+        color: #adf802;
+        background-color: rgba(139, 0, 139, 0.8);
+      }
+      .output {
+        grid-column: 1 / -1;
+        background-color: rgba(0, 0, 0, 0.75);
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        flex-direction: column;
+        padding: 10px;
+        word-wrap: break-word;
+        word-break: break-all;
+      }
+      .output .previous-operand {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 1.5rem;
+      }
+      .output .current-operand {
+        color: white;
+        font-size: 2.5rem;
+      }
+      .green-color {
+        background: rgba(0, 128, 0, 0.99) !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator-grid">
+      <div class="output">
+        <div data-previous-operand class="previous-operand"></div>
+        <div data-current-operand class="current-operand"></div>
+      </div>
+      <button data-all-clear class="span-two">AC</button>
+      <button data-delete>DEL</button>
+      <button data-operation>÷</button>
+      <button data-number>1</button>
+      <button data-number>2</button>
+      <button data-number>3</button>
+      <button data-operation>*</button>
+      <button data-number>4</button>
+      <button data-number>5</button>
+      <button data-number>6</button>
+      <button data-operation>+</button>
+      <button data-number>7</button>
+      <button data-number>8</button>
+      <button data-number>9</button>
+      <button data-operation>-</button>
+      <button data-number>.</button>
+      <button data-number>0</button>
+      <button data-operation>%</button>
+      <button data-equals class="green-color">=</button>
+    </div>
+
+    <script>
+      // get the elements
+      const numberButtons = document.querySelectorAll("[data-number]");
+      const operationButtons = document.querySelectorAll("[data-operation]");
+      const equalsButton = document.querySelector("[data-equals]");
+      const deleteButton = document.querySelector("[data-delete]");
+      const allClearButton = document.querySelector("[data-all-clear]");
+      const previousValue = document.querySelector("[data-previous-operand]");
+      const currentValue = document.querySelector("[data-current-operand]");
+
+      const calculator = {
+        previousValue,
+        currentValue,
+        currentOperand: "",
+        previousOperand: "",
+        operation: undefined,
+        clear: function () {
+          //clear all data
+          this.currentOperand = "";
+          this.previousOperand = "";
+          this.operation = "";
+        },
+        delete: function () {
+          // delete last number of current operand => delete(777) => 77
+          this.currentOperand = this.currentOperand.toString().slice(0, -1);
+        },
+        appendNumber: function (number) {
+          // append clicked numbers to this.currentOperand if it is valid
+          if (number === "." && this.currentOperand.includes(".")) {
+            return;
+          }
+          this.currentOperand =
+            this.currentOperand.toString() + number.toString();
+        },
+        chooseOperation: function (operation) {
+          // if all operands have value, compute its. Or only choose operation
+          if (this.currentOperand === "") {
+            return;
+          }
+          if (this.previousOperand !== "") {
+            this.compute();
+          }
+          this.operation = operation;
+          this.previousOperand = this.currentOperand;
+          this.currentOperand = "";
+        },
+        compute: function () {
+          // compute the operands and assign result to this.currentOperand
+          let computation;
+          const prev = parseFloat(this.previousOperand);
+          const current = parseFloat(this.currentOperand);
+          if (isNaN(prev) || isNaN(current)) {
+            return;
+          }
+          switch (this.operation) {
+            case "+":
+              computation = prev + current;
+              break;
+            case "-":
+              computation = prev - current;
+              break;
+            case "*":
+              computation = prev * current;
+              break;
+            case "÷":
+              computation = prev / current;
+              break;
+            case "%":
+              computation = (prev * current) / 100;
+              break;
+            default:
+              return;
+          }
+          this.currentOperand = computation;
+          this.operation = "";
+          this.previousOperand = "";
+        },
+        updateDisplay: function () {
+          this.currentValue.innerText = this.currentOperand;
+          if (this.operation) {
+            this.previousValue.innerText = `${this.previousOperand} ${this.operation}`;
+          } else {
+            this.previousValue.innerText = "";
+          }
+        },
+      };
+      // add events to number buttons
+      numberButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          calculator.appendNumber(button.innerText);
+          calculator.updateDisplay();
+        });
+      });
+      // add events to operation buttons
+      operationButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          calculator.chooseOperation(button.innerText);
+          calculator.updateDisplay();
+        });
+      });
+      // add events to equals buttons
+      equalsButton.addEventListener("click", (button) => {
+        calculator.compute();
+        calculator.updateDisplay();
+      });
+
+      // add events to clear button
+      allClearButton.addEventListener("click", (button) => {
+        calculator.clear();
+        calculator.updateDisplay();
+      });
+
+      // add events to delete button
+      deleteButton.addEventListener("click", (button) => {
+        calculator.delete();
+        calculator.updateDisplay();
+      });
+
+      // add events to keyboard keys
+      document.addEventListener("keydown", function (event) {
+        let patternForNumbers = /[0-9]/g;
+        let patternForOperators = /[+\-*\/]/g;
+        if (event.key.match(patternForNumbers)) {
+          event.preventDefault();
+          calculator.appendNumber(event.key);
+          calculator.updateDisplay();
+        }
+        if (event.key === ".") {
+          event.preventDefault();
+          calculator.appendNumber(event.key);
+          calculator.updateDisplay();
+        }
+        if (event.key.match(patternForOperators)) {
+          event.preventDefault();
+          calculator.chooseOperation(event.key);
+          calculator.updateDisplay();
+        }
+        if (event.key === "Enter" || event.key === "=") {
+          event.preventDefault();
+          calculator.compute();
+          calculator.updateDisplay();
+        }
+        if (event.key === "Backspace") {
+          event.preventDefault();
+          calculator.delete();
+          calculator.updateDisplay();
+        }
+        if (event.key == "Delete") {
+          event.preventDefault();
+          calculator.clear();
+          calculator.updateDisplay();
+        }
+      });
+    </script>
+  </body>
+</html>

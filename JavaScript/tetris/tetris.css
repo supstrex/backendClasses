@@ -1,0 +1,10 @@
+canvas {
+    margin-left: 500px;
+    margin-right:  50px;
+    border: 10px black solid;
+}
+button{
+    display: block;
+    margin: auto;
+ 
+}
